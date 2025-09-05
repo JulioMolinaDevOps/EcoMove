@@ -2,6 +2,12 @@
 package com.EcoMove.Controladores;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
 import org.springframework.web.client.RestTemplate;
 
 @RestController
@@ -12,13 +18,21 @@ public class GeocodeController {
 
     @GetMapping
     public ResponseEntity<Object> geocode(@RequestParam String address) {
-        String url = "https://nominatim.openstreetmap.org/search?format=json&q=" + address;
-        try {
-            ResponseEntity<Object> response = restTemplate.getForEntity(url, Object.class);
-            return ResponseEntity.ok(response.getBody());
-        } catch (Exception e) {
-            return ResponseEntity.status(500).body("Error en geocodificación");
-        }
+    try {
+        String encodedAddress = URLEncoder.encode(address, StandardCharsets.UTF_8);
+        String url = "https://nominatim.openstreetmap.org/search?format=json&q=" + encodedAddress;
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.set("User-Agent", "EcoMoveApp/1.0 (tu-email@example.com)");
+        HttpEntity<String> entity = new HttpEntity<>(headers);
+
+        ResponseEntity<Object> response = restTemplate.exchange(url, HttpMethod.GET, entity, Object.class);
+        return ResponseEntity.ok(response.getBody());
+    } catch (Exception e) {
+        e.printStackTrace(); // log real del error
+        return ResponseEntity.status(500).body("Error en geocodificación: " + e.getMessage());
     }
+}
+
     
 }
